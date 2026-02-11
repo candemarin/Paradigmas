@@ -42,14 +42,17 @@ uncurry f (x, y) = f x y
 
 -- Ejercicio 3
 
--- reduce una lista desde la derecha usando una función y un valor inicial.reduce una lista desde la derecha usando una función y un valor inicial.
--- los argumentos de la funcion son un elemento de la lista y el resultado acumulado hasta ese punto
+-- reduce una lista desde la derecha usando una función y un valor inicial.
+-- los argumentos de la funcion son 2, un elemento de la lista y el resultado acumulado hasta ese punto
 -- foldr :: (a -> b -> b) -> b -> [a] -> b
 -- foldr f z [] = z
 -- foldr f z (x:xs) = f x (foldr f z xs)
 
 sumFoldr :: (Num a) => [a] -> a
 sumFoldr = foldr (+) 0
+
+-- elem _ []     = False
+-- elem e (x:xs) = (e == x) || elem e xs
 
 elemFoldr :: (Eq a) => a -> [a] -> Bool
 elemFoldr elem = foldr (\x resultadoRestoLista -> x == elem || resultadoRestoLista) False
@@ -58,6 +61,9 @@ ppFoldr :: [a] -> [a] -> [a]
 -- ppFoldr = foldr (:)
 -- ok pero si los parametros son xs ys concatenaria ys xs en vez de xs ys como hace (++) asi se arregla:
 ppFoldr = flip (foldr (:))
+
+-- filter p [] = []
+-- filter p (x:xs) = if p x then x : filter p xs else filter p xs
 
 filterFoldr :: (a -> Bool) -> [a] -> [a]
 filterFoldr predicado = foldr (\x res -> if predicado x then x : res else res) []
@@ -133,6 +139,9 @@ mapPares :: (a -> b -> c) -> [(a, b)] -> [c]
 -- mapPares f = map (\x -> f (fst x) (snd x))
 mapPares f = map (Prelude.uncurry f)
 
+-- const :: a -> b -> a
+-- const x _ = x
+
 -- (zip)
 armarPares :: [a] -> [b] -> [(a, b)]
 -- armarPares _ [] = []
@@ -159,19 +168,19 @@ foldNat f z 0 = z
 foldNat f z n = f (foldNat f z (n - 1))
 
 potencia :: Integer -> Integer -> Integer
-potencia n = foldNat (*n) 1-- p
+potencia n = foldNat (* n) 1 -- p
 
 -- Ejercicio 10
 
 genLista :: a -> (a -> a) -> Integer -> [a]
 genLista x f 0 = []
 -- genLista x f n = x : genLista (f x) f (n-1)
-genLista x f n = foldNat (\rec -> rec ++ [f (last rec)]) [x] (n-1)
+genLista x f n = foldNat (\rec -> rec ++ [f (last rec)]) [x] (n - 1)
 
 desdeHasta :: Integer -> Integer -> [Integer]
-desdeHasta x y | y > x = genLista x (+1) (y-x+1)
+desdeHasta x y | y > x = genLista x (+ 1) (y - x + 1)
 
--- Ejercicio 12
+-- Ejercicio 12 
 
 data AB a = Nil | Bin (AB a) a (AB a)
 
@@ -186,7 +195,7 @@ recrAB f z (Bin i r d) = f i (recrAB f z i) r d (recrAB f z d)
 
 esNil :: AB a -> Bool
 esNil Nil = True
-esNil _   = False
+esNil _ = False
 
 -- esNil :: AB a -> Bool
 -- esNil arbol = case arbol of
@@ -194,7 +203,7 @@ esNil _   = False
 --   Bin _ _ _ -> False
 
 altura :: AB a -> Integer
-altura = foldAB (\recI raiz recD -> 1 + max recI recD) 0
+altura = foldAB (\recI raiz recD -> 1 + max recI recD) 0  
 
 cantNodos :: AB a -> Integer
 cantNodos = foldAB (\recI raiz recD -> 1 + recI + recD) 0
@@ -202,14 +211,22 @@ cantNodos = foldAB (\recI raiz recD -> 1 + recI + recD) 0
 -- Ejercicio 13
 
 ramas :: AB a -> [[a]]
-ramas = foldAB (\recI raiz recD -> case (recI, recD) of 
-                                  ([], []) -> [[raiz]]
-                                  _ -> map (raiz:) recI ++ map (raiz:) recD ) []
+ramas =
+  foldAB
+    ( \recI raiz recD -> case (recI, recD) of
+        ([], []) -> [[raiz]]
+        _ -> map (raiz :) recI ++ map (raiz :) recD
+    )
+    []
 
 cantHojas :: AB a -> Integer
-cantHojas = foldAB (\recI _ recD -> case (recI, recD) of 
-                                      (0, 0) -> 1
-                                      _ -> recI + recD ) 0
+cantHojas =
+  foldAB
+    ( \recI _ recD -> case (recI, recD) of
+        (0, 0) -> 1
+        _ -> recI + recD
+    )
+    0
 
 espejo :: AB a -> AB a
 -- espejo Nil = Nil
@@ -222,27 +239,32 @@ data RoseTree r = Rose r [RoseTree r]
 
 foldRose :: (r -> [b] -> b) -> RoseTree r -> b
 foldRose f (Rose r rs) = f r (map rec rs)
-                        where rec = foldRose f
-    
+  where
+    rec = foldRose f
+
 ramasR :: RoseTree a -> [[a]]
-ramasR = foldRose (\x rec -> if null rec 
-                            then [[x]]
-                            else map (x:) (concat rec))
-    
+ramasR =
+  foldRose
+    ( \x rec ->
+        if null rec
+          then [[x]]
+          else map (x :) (concat rec)
+    )
+
 -- Ejercicio 17
 -- [1, 3]
 
 -- Ejercicio 18
-paresDeNat :: [(Int,Int)]
-pares = [(x,y-x) | y <- [0..], x <- [0..y-1]]
+paresDeNat :: [(Int, Int)]
+paresDeNat = [(x, y - x) | y <- [0 ..], x <- [0 .. y - 1]]
 
 -- Ejercicios 20 21
 
 listasQueSuman :: Int -> [[Int]]
 listasQueSuman 0 = [[]]
-listasQueSuman n | n > 0 = [x : xs | x <- [1..n], xs <- listasQueSuman (n-x)]
+listasQueSuman n | n > 0 = [x : xs | x <- [1 .. n], xs <- listasQueSuman (n - x)]
 
 listaConListas :: [[Int]]
-listaConListas = [xs | n <- [1..], xs <- listasQueSuman n]
+listaConListas = [xs | n <- [1 ..], xs <- listasQueSuman n]
 
--- >>> 
+-- >>>
